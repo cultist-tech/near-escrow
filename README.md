@@ -1,45 +1,60 @@
-# Escrow
+Escrow
+===================
 
-Возможность обменять NFT на FT, NFT на NFT, FT на FT вне специализированных площадок с определенным пользователем. Это даст возможность производить действия с NFT/FT, даже если их нет на площадка (не залистили), либо если ты не хочешь чтобы NFT/FT попали в другие руки.
+The ability to trade NFT to FT, NFT to NFT, FT to FT outside of a specialized site with a specific user. This will give you the ability to do things with NFT/FT even if they are not on the site (not cast), or if you don't want the NFT/FT to fall into other hands.
 
 
-```rust
-pub trait EscrowCore {
-  // вывести ft токен
-  fn escrow_withdraw_ft(&mut self, ft_token_id: AccountId, amount: U128);
-  // вывести nft токен
-  fn escrow_withdraw_nft(&mut self, nft_token_id: AccountId, token_id: TokenId);
+This repository includes an implementation of a referral contract.
 
-  // предложить обмен (ft -> ft, nft -> ft, ft -> nft, nft -> nft)
-  fn escrow_make_offer(&mut self, offer: EscrowEnum, receiver_id: AccountId) -> JsonEscrow;
-  // принять обмен
-  fn escrow_accept_offer(&mut self, offer_id: OfferId);
+Prerequisites
+=============
 
-  // просмотр информации об сделке
-  fn escrow_offer(&self, offer_id: OfferId) -> Option<JsonEscrow>;
-  // просмотр списока сделок созданных пользователем
-  fn escrow_offers_by_owner(&self, account_id: AccountId, limit: Option<u64>, offset: Option<U128>) -> Vec<JsonEscrow>;
-  // просмотр списка сделак направленных пользователю
-  fn escrow_offers_for_owner(&self, account_id: AccountId, limit: Option<u64>, offset: Option<U128>) -> Vec<JsonEscrow>;
-  // кол-во актуальных сделок от пользователя
-  fn escrow_offers_total_by_owner(&self, account_id: AccountId) -> u64;
-  // кол-во актуальных сделок направленных пользователю
-  fn escrow_offers_total_for_owner(&self, account_id: AccountId) -> u64;
-}
+  * Make sure Rust is installed per the prerequisites in [`near-sdk-rs`](https://github.com/near/near-sdk-rs).
+  * Make sure [near-cli](https://github.com/near/near-cli) is installed.
 
-pub trait NonFungibleTokenApprovalsReceiver {
-  // передача nft токена в контракт обмена
-  fn nft_on_transfer(
-    &mut self,
-    sender_id: AccountId,
-    previous_owner_id: AccountId,
-    token_id: TokenId,
-    msg: String,
-  ) -> PromiseOrValue<bool>;
-}
+Explore this contract
+=====================
 
-trait FungibleTokenReceiver {
-  // передача ft токена в контракт обмена
-  fn ft_on_transfer(&mut self, sender_id: AccountId, amount: U128, msg: String) -> PromiseOrValue<U128>;
-}
+The source for this contract is in `/src/lib.rs`.
+
+Building this contract
+======================
+Run the following, and we'll build our rust project up via cargo. This will generate our WASM binaries into our `res/` directory. This is the smart contract we'll be deploying onto the NEAR blockchain later.
+```bash
+sh ./scripts/build.sh
+```
+
+Using this contract
+===================
+
+### Quickest deploy
+
+You can build and deploy this smart contract to a development account. [Dev Accounts](https://docs.near.org/docs/concepts/account#dev-accounts) are auto-generated accounts to assist in developing and testing smart contracts. Please see the [Standard deploy](#standard-deploy) section for creating a more personalized account to deploy to.
+
+```bash
+sh ./scripts/dev-deploy.sh
+```
+
+Behind the scenes, this is creating an account and deploying a contract to it. On the console, notice a message like:
+
+>Done deploying to dev-1234567890123
+
+In this instance, the account is `dev-1234567890123`. A file has been created containing a key pair to
+the account, located at `neardev/dev-account`. To make the next few steps easier, we're going to set an
+environment variable containing this development account id and use that when copy/pasting commands.
+Run this command to set the environment variable:
+
+```bash
+source ./scripts/neardev/dev-account.env
+```
+
+You can tell if the environment variable is set correctly if your command line prints the account name after this command:
+```bash
+echo $CONTRACT_NAME
+```
+
+The next command will initialize the contract using the `new` method:
+
+```bash
+near call $CONTRACT_NAME new_default_meta '{"owner_id": "'$CONTRACT_NAME'"}' --accountId $CONTRACT_NAME
 ```
